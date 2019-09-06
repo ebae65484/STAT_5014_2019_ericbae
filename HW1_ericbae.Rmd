@@ -37,8 +37,35 @@ You will use this new R Markdown file for the remainder of this homework.
 ### Part A
 In this new Rmarkdown file, please type a paragraph about what you are hoping to get out of this class.  Include at least 3 specific desired learning objectives in list format.  
 
+\fbox{\begin{minipage}{\linewidth}
+I have already gone through a lot of trouble getting to this point, and in the process, already learned a lot about GitHub and hot it operates. The followings are the three desired learning objectives I have: 
+\begin{itemize}
+\item Learn more about GitHub and how it can be useful to me later on. 
+\item Learn different R functions and packages that I had not known before. 
+\item Familiarize myself with other programming languages, if that is part of the course objective. 
+\end{itemize}
+\end{minipage}
+}
+
 ### Part B
 To this, add 3 density functions (Appendix Cassella & Berger) in centered format with equation number, i.e. format this as you would find in a journal.  
+
+\fbox{\begin{minipage}{\linewidth}
+\textbf{Exponential distribution}
+\begin{equation}
+f(x|\beta) = \frac{1}{\beta}e^{-\frac{x}{\beta}}, 0 \leq x < \infty, \beta > 0
+\end{equation}
+\textbf{Lognormal distribution}
+\begin{equation}
+f(x|\mu, \sigma^2) = \frac{1}{\sqrt{2\pi}\sigma} \frac{e^{-(log x - \mu)^2/(2\sigma^2)}}{x}, 0 \leq x < \infty, -\infty < \mu < \infty
+\end{equation}
+\textbf{Pareto distribution}
+\begin{equation}
+f(x | \alpha, \beta) = \frac{\beta \alpha^\beta}{x^{\beta + 1}}, a < x < \infty, \alpha > 0, \beta > 0
+\end{equation}
+I hope this is good enough. 
+\end{minipage}
+}
 
 # Problem 3
 
@@ -50,10 +77,34 @@ Next to each item, comment on any challenges you see in performing the step.  If
 - <https://doi.org/10.1093/biostatistics/kxq028>  
 - <http://statweb.stanford.edu/~wavelab/Wavelab_850/wavelab.pdf>
 
+\fbox{\begin{minipage}{\linewidth}
+The following is the list of the steps in performing reproducible research, per Sandve et. al. 
+\begin{enumerate}
+\item For Every Result, Keep Track of How It Was Produced. I do not see a huge challenge in this unless the methodology that was applied to obtain the result was convoluted and difficult to keep track of, which should not happen in the first place. 
+\item Avoid Manual Data Manipulation Steps As Much As Possible. Again, I do not see much controversy here, as we should maintain manual data manipulation to minimum. If there is any challenges I see, it would be what to do in case where all other options have failed to return satisfactory results, and one is tempted to lean to manual data manipulation. 
+\item Archive the Exact Versions of All External Programs Used. One possible obstacle I can see is if there is some user agreement clause or for other technical reasons archiving is not permitted or possible, but I do not know how often this is even an issue. I have faced issues with this; scripts I have produced using outdated version of R does not run in newer version. 
+\item Version Control All Custom Scripts. I suspect too much of this could compromise efficiency if numerous changes to the programs are required. 
+\item Record All Intermediate Results, When Possible in Standardized Formats. I suspect this may become increasingly difficult if obtaining each result requires significant amount of time and computing power, or the size of the output is too huge. This is something I have dealt with as a Master's student. 
+\item For Analyses That Include Randomness, Note Underlying Random Seeds. I think this is a smart move, something I should have done while I was working on research projects. There may be challenges of retaining random seeds when multiple different seeds have been applied. 
+\item Always Store Raw Data behind Plots. A challenge I can see is in case where contract regarding permissible use of the data has expired, thus would require all raw data to be expunged from the record. This would not be possible anymore. 
+\item Generate Hierarchical Analysis Output, Allowing Layers of Increasing Detail to Be Inspected. 
+\item Connect Textual Statements to Underlying Results. I believe this is important as it allows for better understanding of the results not only from the readers' perspective, but also from my own. However, sometimes I found too much textual statements could lead to greater confusion. 
+\item Provide Public Access to Scripts, Runs, and Results. A challenge is if the user agreement of data denies public access to those. 
+\end{enumerate}
+\end{minipage}
+}
+&nbsp; 
+
 # Problem 4
 
 Please create and include a basic scatter plot and histogram of an internal R dataset.  To get a list of the datasets available use `library(help="datasets")`.
 
+```{r}
+library(help="datasets")
+# I used the dataset "women"
+plot(women, pch = 16, col = "hotpink", 
+     main = "Average Weights for American Women by Heights")
+```
 
 **This document containing solutions to Problems 2-4 should be typed in RMarkdown, using proper English, and knitted to create a pdf document.  Do NOT print, we will use git to submit this assignment as detailed below.**
 
@@ -72,4 +123,5 @@ A more detailed description is on the course website under *Submitting Homework*
 
 ## Reminder on where to find Git help:  
 Read through the Git help Chapters 1 and 2. <https://git-scm.com/book/en/v2>
+
 
