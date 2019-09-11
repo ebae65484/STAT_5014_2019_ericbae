@@ -1,127 +1,303 @@
 ---
 title: "Homework 2"
-subtitle: "Due Wednesday Sep 5"
-date: '`r Sys.Date()`'
-output: pdf_document
+author: "Eric Bae"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+subtitle: Due September 12, 2019
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(knitr)
+library(tidyr)
+library(dplyr)
 ```
 
-For each assignment, turn in by the due date/time.  Late assignments must be  arranged prior to submission.  In every case, assignments are to be typed neatly using proper English in Markdown.
+For each assignment, turn in by the due date/time.  Late assignments must be arranged prior to submission.  In every case, assignments are to be typed neatly using proper English in Markdown.  
 
-This week, we spoke about Reproducible Research, R, Rstudio, Rmarkdown, and LaTeX.  To summarize the ideas behind Reproducible Research, we are focusing on Reproducible Analysis.  For us, Reproducible Analysis is accomplished by mixing code, figures and text into a cohesive document that fully describes both the process we took to go from data to results and the rational behind our data driven conclusions.  Our goal should be to enable a moderately informed reader to follow our document and reproduce the steps we took to reach the results and hopefully conclusions we obtained.
+This week, we spoke about Reproducible Research, R and version control, getting, cleaning and munging data and finally, summarizing data.  Again, we are focusing on Reproducible Analysis which, for us, is accomplished by mixing code, figures and text into a cohesive document that fully describes both the process we took to go from data to results and the rational behind our data driven conclusions.  This week we begin creating tidy data sets.  While others have proposed standards for sharing data with statiticians, as practicing data scientists, we realize the often onerous task of getting, cleaning and formatting data is usually in our hands.  From here on out, we will use GitHub to retrieve and turn in the homework assignments.  
 
-# Problem 1
+## Problem 1
 
-R is an open source, community built, programming platform.  Not only is there a plethra of useful web based resources, there also exist in-R tutorials.  To speed our learning, we will use one such tutorial _swirl_.  Please install the _swirl_ package, install the "R_Programming_E" lesson set, and complete the following lessons: 1-3 and 15.  Each lesson takes about 10 min.  
+Work through the "R Programming E" lesson parts 4-7, 14 (optional 12 - only takes 5 min). 
 
 From the R command prompt:  
 
-```{r eval=FALSE, echo=TRUE}
+```{r echo=TRUE, eval=FALSE}
 install.packages("swirl")  
 library(swirl)  
 install_course("R_Programming_E")  
 swirl()  
 ```
 
-# Problem 2
+## Problem 2
 
-Now that we have the R environment setup and have a basic understanding of R, let's add Markdown (choose File, New File, R Markdown, pdf).  
+Create a new R Markdown file within your local GitHub repo folder (file-->new-->R Markdown-->save as).
 
-Let's go ahead and save the file as is.  Save the file to the directory containing the *README.md* file you created and committed to your git repo in Homework 0.  The filename should be: HW1_pid, i.e. for me it would be HW1_rsettlag.
+The filename should be: HW2_lastname, i.e. for me it would be HW2_Settlage
 
-You will use this new R Markdown file for the remainder of this homework.
+You will use this new R Markdown file to solve problems 3-5.
+  
+## Problem 3
 
-### Part A
-In this new Rmarkdown file, please type a paragraph about what you are hoping to get out of this class.  Include at least 3 specific desired learning objectives in list format.  
+In the lecture, there were two links to StackOverflow questions on why one should use version control.  In your own words, summarize in 2-3 sentences how you think version control can help you in the classroom.
 
 \fbox{\begin{minipage}{\linewidth}
-I have already gone through a lot of trouble getting to this point, and in the process, already learned a lot about GitHub and hot it operates. The followings are the three desired learning objectives I have: 
-\begin{itemize}
-\item Learn more about GitHub and how it can be useful to me later on. 
-\item Learn different R functions and packages that I had not known before. 
-\item Familiarize myself with other programming languages, if that is part of the course objective. 
-\end{itemize}
+I think version control in this classroom is a good idea because I am prone to causing irreversible mistakes to my codes, and since we will continue to upload a large number of files to GitHub, which could lead to me losing track of some files. I have had situations where I accidentally overwrote a file against my intention. In fact, I already did with HW1, though that one was semi-intentional. 
 \end{minipage}
 }
 
-### Part B
-To this, add 3 density functions (Appendix Cassella & Berger) in centered format with equation number, i.e. format this as you would find in a journal.  
-
-\fbox{\begin{minipage}{\linewidth}
-\textbf{Exponential distribution}
-\begin{equation}
-f(x|\beta) = \frac{1}{\beta}e^{-\frac{x}{\beta}}, 0 \leq x < \infty, \beta > 0
-\end{equation}
-\textbf{Lognormal distribution}
-\begin{equation}
-f(x|\mu, \sigma^2) = \frac{1}{\sqrt{2\pi}\sigma} \frac{e^{-(log x - \mu)^2/(2\sigma^2)}}{x}, 0 \leq x < \infty, -\infty < \mu < \infty
-\end{equation}
-\textbf{Pareto distribution}
-\begin{equation}
-f(x | \alpha, \beta) = \frac{\beta \alpha^\beta}{x^{\beta + 1}}, a < x < \infty, \alpha > 0, \beta > 0
-\end{equation}
-I hope this is good enough. 
-\end{minipage}
-}
-
-# Problem 3
-
-A quote from Donoho (1995): "an article about computational results is advertising, not scholarship. The actual scholarship is the full software environment, code and data, that produced the result."  To the document created in Problem 4, add a summary of the steps in performing Reproducible Research in numbered list format as detailed in:  
-<http://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1003285>.  
-\newline
-Next to each item, comment on any challenges you see in performing the step.  If you are interested in learning more, a good summary of why this is important can be found in  
-- <https://www.informs.org/ORMS-Today/Public-Articles/October-Volume-38-Number-5/Reproducible-Operations-Research>  
-- <https://doi.org/10.1093/biostatistics/kxq028>  
-- <http://statweb.stanford.edu/~wavelab/Wavelab_850/wavelab.pdf>
-
-\fbox{\begin{minipage}{\linewidth}
-The following is the list of the steps in performing reproducible research, per Sandve et. al. 
-\begin{enumerate}
-\item For Every Result, Keep Track of How It Was Produced. I do not see a huge challenge in this unless the methodology that was applied to obtain the result was convoluted and difficult to keep track of, which should not happen in the first place. 
-\item Avoid Manual Data Manipulation Steps As Much As Possible. Again, I do not see much controversy here, as we should maintain manual data manipulation to minimum. If there is any challenges I see, it would be what to do in case where all other options have failed to return satisfactory results, and one is tempted to lean to manual data manipulation. 
-\item Archive the Exact Versions of All External Programs Used. One possible obstacle I can see is if there is some user agreement clause or for other technical reasons archiving is not permitted or possible, but I do not know how often this is even an issue. I have faced issues with this; scripts I have produced using outdated version of R does not run in newer version. 
-\item Version Control All Custom Scripts. I suspect too much of this could compromise efficiency if numerous changes to the programs are required. 
-\item Record All Intermediate Results, When Possible in Standardized Formats. I suspect this may become increasingly difficult if obtaining each result requires significant amount of time and computing power, or the size of the output is too huge. This is something I have dealt with as a Master's student. 
-\item For Analyses That Include Randomness, Note Underlying Random Seeds. I think this is a smart move, something I should have done while I was working on research projects. There may be challenges of retaining random seeds when multiple different seeds have been applied. 
-\item Always Store Raw Data behind Plots. A challenge I can see is in case where contract regarding permissible use of the data has expired, thus would require all raw data to be expunged from the record. This would not be possible anymore. 
-\item Generate Hierarchical Analysis Output, Allowing Layers of Increasing Detail to Be Inspected. 
-\item Connect Textual Statements to Underlying Results. I believe this is important as it allows for better understanding of the results not only from the readers' perspective, but also from my own. However, sometimes I found too much textual statements could lead to greater confusion. 
-\item Provide Public Access to Scripts, Runs, and Results. A challenge is if the user agreement of data denies public access to those. 
-\end{enumerate}
-\end{minipage}
-}
 &nbsp; 
 
-# Problem 4
+## Problem 4
 
-Please create and include a basic scatter plot and histogram of an internal R dataset.  To get a list of the datasets available use `library(help="datasets")`.
+In this exercise, you will import, munge, clean and summarize datasets from Wu and Hamada's _Experiments: Planning, Design and Analysis_ book you will use in the Spring.  For each one, please weave your code and text to describe both your process and observations.  Make sure you create a tidy dataset describing the variables, create a summary table of the data, note issues with the data.  
+
+a. Sensory data from five operators.    
+<http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/Sensory.dat> 
+b. Gold Medal performance for Olympic Men's Long Jump, year is coded as 1900=0.  
+<http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/LongJumpData.dat>  
+c. Brain weight (g) and body weight (kg) for 62 species.    
+<http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/BrainandBodyWeight.dat>  
+d. Triplicate measurements of tomato yield for two varieties of tomatos at three planting densities.  
+<http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/tomato.dat>  
 
 ```{r}
-library(help="datasets")
-# I used the dataset "women"
-plot(women, pch = 16, col = "hotpink", 
-     main = "Average Weights for American Women by Heights")
+# Sensory Table
+sensory.url <- "http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/Sensory.dat"
+
+# Importing data as dataframe
+sensory <- as.data.frame(fread(sensory.url, fill = TRUE, skip = 2))
+N <- nrow(sensory) # Number of rows = 30
+D <- ncol(sensory) - 1 # Number of objectives/variables = 5
+
+# Rearranging data so that NA goes to the first row
+for (i in 1:N) {
+  if (is.na(sensory$V6[i])) {
+    sensory[i,-1] <- sensory[i,1:D]
+    sensory[i,1] <- NA
+  }
+}
+
+# Total number of items = 10
+I <- length(sensory$V1[which(is.na(sensory$V1) == FALSE)])
+
+# Reorganizes item
+sensory$V1 <- rep(1:I, each = 3)
+
+# Tidying up, one column by column
+Item <- sort(rep(sensory$V1, each = D))
+Observation <- rep(rep(1:3, each = 5), I)
+Operator <- rep(rep(1:D), 3*I)
+Dat <- c(t(sensory[,-1]))
+
+# Combining the columns
+sensory <- as_tibble(cbind(Item, Observation, Operator, Dat))
+
+# Summary statistics
+summary(sensory)
+sensory %>%
+  group_by(Operator) %>%
+  summarize(Mean = mean(Dat), SD = sd(Dat), Min = min(Dat), Max = max(Dat))
+sensory %>%
+  group_by(Item) %>%
+  summarize(Mean = mean(Dat), SD = sd(Dat), Min = min(Dat), Max = max(Dat))
+#sensory %>%
+#  group_by(Item, Operator) %>%
+#  summarize(Mean = mean(Dat), SD = sd(Dat), Min = min(Dat), Max = max(Dat))
 ```
 
-**This document containing solutions to Problems 2-4 should be typed in RMarkdown, using proper English, and knitted to create a pdf document.  Do NOT print, we will use git to submit this assignment as detailed below.**
+\fbox{\begin{minipage}{\linewidth}
+The summary statistics shows that the all-time minimum sensory measurement (no idea what the unit is) is 0.700, the maximum is 9.400, and the mean is 4.657. 
 
-# Problem 5
-Please knit this document to PDF (name should be `HW2_pid`) and push to GitHub:
+Grouping by operator, operator 3 had the minimum average measurement with the value of 4.17, and operator 4 had the maximum average measurement with the value of 5.19. 
 
-In the R Terminal, type:  
-\begin{enumerate}
-    \item git pull  
-    \item git add HW1\_pid.[pR]*  (NOTE: this should add two files)  
-    \item git commit -m "final HW2 submission"   
-    \item git push
-\end{enumerate}
+Grouping by item, item 7 had the minimum mean measurement at 1.41 while item 9 had the highest at 8.47. 
+\end{minipage}
+}
 
-A more detailed description is on the course website under *Submitting Homework*.
+&nbsp; 
 
-## Reminder on where to find Git help:  
-Read through the Git help Chapters 1 and 2. <https://git-scm.com/book/en/v2>
+```{r}
+# Kable
+kable(sensory, format = "markdown", caption = "Sensory data, reformated")
+```
+
+\fbox{\begin{minipage}{\linewidth}
+The above is the tidy version of the data set. There is obviously a lot of issues with this data set. Starting with the fact that it is extremely long, it is hard to navigate and confusing to understand. 
+
+I also had to use a lot of hard-coding, which is not ideal. 
+\end{minipage}
+}
+
+&nbsp; 
+
+```{r, warning=FALSE}
+# Gold Medals Table
+medals.url <- "http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/LongJumpData.dat"
+medals <- as.data.frame(fread(medals.url, fill = TRUE, skip = 1))
+
+# Assign names
+colnames(medals) <- rep(c("Year", "Long Jump"), 4)
+
+# Tibble
+medals <- as_tibble(rbind(medals[,1:2], medals[,3:4], medals[,5:6], medals[,7:8]))
+
+# Summary statistics
+summary(medals)
+medals <- medals %>%
+  mutate(Rank = round(rank(-`Long Jump`), 0)) # ADded rankings
+
+# Kable
+kable(medals, format = "markdown", caption = "Gold Medals data, reformated")
+```
+
+\fbox{\begin{minipage}{\linewidth}
+The above table is the table of the record long jump of the male gold medalist by olympic year. The index year (0) is 1900. I also added the rankings as the third column. 
+
+The minimum record was 249.75, recorded at the 1896 Olympics and the maximum record was 350.50, recorded at the 1968 Olympics. The mean record across the years was 310.3. 
+
+This one went a little bit better than the Sensory data set, though some hard coding was used, especially for rbind().
+\end{minipage}
+}
+
+&nbsp; 
+
+```{r, warning=FALSE}
+# Brain and Body Weight Table
+brain.url <- "https://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/BrainandBodyWeight.dat"
+brain <- as.data.frame(fread(brain.url, fill = TRUE, skip = 1))
+
+# Assign names
+colnames(brain) <- rep(c("Body Wt", "Brain Wt"), 3)
+
+# As tibble
+brain <- as_tibble(rbind(brain[,1:2], brain[,3:4], brain[,5:6]))
+
+# Add brain weight/body weight ratio
+brain <- brain %>%
+  arrange(`Body Wt`) %>%
+  mutate(`Brain-to-Body Ratio` = `Brain Wt`/`Body Wt`)
+
+# Summary statistics
+summary(brain)
+
+# Kable
+kable(brain, format = "markdown", caption = "Brain and Body Weight data, reformated")
+```
+
+\fbox{\begin{minipage}{\linewidth}
+The average weight of all bodies observed was 198.790 kg whereas the average weight of all brains was 283.13 g. However, the median weight of bodies and brains were 3.342 kg and 17.25 g, respectively, suggesting that both weight were skewed heavily to the right. The weights ranged from 0.005 kg to 6,654.000 kg for body and 0.10 g to 5,712.00 g for brain. 
+
+I added the brain-to-body weight ratio (in 1000s) as the third column just for reference. Though I did not perform statistical analysis, simple eyeballing it seems to indicate that the larger the body weight the lower the ratio. 
+
+The issue here was more similar to the issue I faced with the medals dataset in that there was some hard coding with binding the three pairs of columns into one. 
+\end{minipage}
+}
+
+&nbsp; 
+
+```{r}
+# Tomato Yield Table
+tomato.url <- "http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/tomato.dat"
+tomato <- as.data.frame(fread(tomato.url, fill = TRUE, skip = 1))
+
+# Assign names
+colnames(tomato) <- as.character(tomato[1, c(4, 1:3)])
+colnames(tomato)[1] <- "Tomato Variety"
+tomato <- tomato[-1,]
+tomato <- tomato[rep(1:2, each = 3),]
+
+new.tomato <- tomato
+for (i in seq(1, nrow(tomato), by = 3)) {
+  for (j in 2:ncol(tomato)) {
+    new.tomato[seq(i, i+2),j] <- strsplit(as.character(tomato[i,j]), ",")[[1]]
+  }
+}
+
+# Tidying up, one column by column
+Tomato <- c(t(rep(new.tomato$`Tomato Variety`, each = ncol(new.tomato) - 1)))
+Density <- rep(colnames(new.tomato)[-1], length(unique(Tomato)))
+Yield <- c(t(new.tomato[,-1]))
+tomato <- as_tibble(cbind(Tomato, Density, Yield))
+
+# Kable
+kable(tomato, format = "markdown", caption = "Tomato yield by variety, reformated")
+```
+
+\fbox{\begin{minipage}{\linewidth}
+The first column represents the tomato variety, the second the planting density, and the third the yield. The lowest yield was found in the tomato variety called "PusaEarlyDwarf" and planting density of 10,000, while the highest yield was found in "Ife\#1" and planting density of 30,000. 
+
+I had a lot of trouble with this data set because the yield data was not numeric but actually some sort of characters, delineated by commas. I had to find a way to split them up by the commas, but unable to change the classes of the yields without causing the numbers to change. This is why summary table is not available here because I could not find a way to generate summary statistics for character outputs. 
+\end{minipage}
+}
+
+&nbsp; 
+
+## Problem 5
+
+In the swirl lessons, you played with a dataset "plants".  Our ultimate goal is to see if there is a relationship between pH and Foliage_Color.  Consider a statistic that combines the information in pH_Min and pH_Max.  Clean, summarize and transform the data as appropriate.  Use function _lm_ to test for a relationship.  Report both the coefficients and ANOVA results in table form.
+
+Note that if you didn't just do the swirl lesson, it is now not available.  Add the following code to your project to retrieve it.
+
+```{r echo=TRUE}
+# Path to data
+library(swirl)
+.datapath <- file.path(path.package('swirl'), 'Courses',
+                      'R_Programming_E', 'Looking_at_Data',
+                      'plant-data.txt')
+# Read in data
+plants <- read.csv(.datapath, strip.white=TRUE, na.strings="")
+# Remove annoying columns
+.cols2rm <- c('Accepted.Symbol', 'Synonym.Symbol')
+plants <- plants[, !(names(plants) %in% .cols2rm)]
+# Make names pretty
+names(plants) <- c('Scientific_Name', 'Duration', 'Active_Growth_Period',
+                   'Foliage_Color', 'pH_Min', 'pH_Max',
+                   'Precip_Min', 'Precip_Max',
+                   'Shade_Tolerance', 'Temp_Min_F')
+```
+
+```{r}
+attach(plants)
+plants.full <- plants[-which(is.na(pH_Min)|is.na(Foliage_Color)|is.na(pH_Max)),]
+plants.full$pH_Avg <- rowMeans(cbind(plants.full$pH_Max, plants.full$pH_Min))
+summary(plants.full$Foliage_Color)
+summary(plants.full$pH_Avg)
+summary(lm(pH_Avg ~ Foliage_Color, data = plants.full))
+summary(aov(pH_Avg ~ Foliage_Color, data = plants.full))
+```
 
 
+\fbox{\begin{minipage}{\linewidth}
+The linear model above compares the foliage color of plants in question to the average of the maximum and minimum pH. This is obviously problematic because it does not take into consideration species type and any other environmental factors. However, for the purpose of this exercise, I decided to do so anyway because why not. Also, all observations with missing values in any of the three variables used were eliminated.   
+
+The foliage color is a nominal, factored variable whereas the pH is a numeric, continuous variable. The foliage color "dark green" was the index in our linear regression, and there were five other colors - Gray-green, green, red, white-gray, and yellow-green. Based on the summary, gray-green, green, and white-gray gave us with $p-value < 0.05$, which I will determine to be our alpha. All of them had positive slope coefficients. This means that the three colors - gray-green, green, and white-gray were associated with higher average pH of soil than the index - dark green - by approximately 0.4126, 0.1847, and 0.4451, respectively. 
+
+Based on the ANOVA, the p-value was 0.00149, which was, again, lower than $0.05$. This indicates that there is a significant relationship between foliage color and the average pH. 
+\end{minipage}
+}
+
+&nbsp; 
+
+## Problem 6
+
+Finish this homework by pushing your changes to your repo.  In general, your workflow for this should be:  
+
+1. git pull -- to make sure you have the most recent repo  
+2. In R: do some work  
+3. git add -- this tells git to track new files  
+4. git commit -- make message INFORMATIVE and USEFUL  
+5. git push -- this pushes your local changes to the repo  
+
+If you have difficulty with steps 1-5, git is not correctly or completely setup.  See me for help.
+
+**Only submit the .Rmd and .pdf solution files.  Names should be formatted HW2_lastname.Rmd and HW2_lastname.pdf**
+
+## Optional preperation for next class:  
+
+TBD
