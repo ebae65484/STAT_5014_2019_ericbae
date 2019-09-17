@@ -1,6 +1,6 @@
 ---
-title: "Homework 2"
-subtitle: "Due September 12, 2019"
+title: "Homework 3"
+subtitle: "Due Wednesday September 18, 2019"
 author: "Eric Bae"
 date: '`r Sys.Date()`'
 output: pdf_document
@@ -8,22 +8,23 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(knitr)
+library(tidyr)
+library(dplyr)
 ```
 
 For each assignment, turn in by the due date/time.  Late assignments must be arranged prior to submission.  In every case, assignments are to be typed neatly using proper English in Markdown.  
 
-This week, we spoke about Reproducible Research, R and version control, getting, cleaning and munging data and finally, summarizing data.  Again, we are focusing on Reproducible Analysis which, for us, is accomplished by mixing code, figures and text into a cohesive document that fully describes both the process we took to go from data to results and the rational behind our data driven conclusions.  This week we begin creating tidy data sets.  While others have proposed standards for sharing data with statiticians, as practicing data scientists, we realize the often onerous task of getting, cleaning and formatting data is usually in our hands.  From here on out, we will use GitHub to retrieve and turn in the homework assignments.  
+This week, we spoke about R and version control, munging and 'tidying' data, good programming practice and finally some basic programming building blocs.  To begin the homework, we will for the rest of the course, start by loading data and then creating tidy data sets.  
 
 ## Problem 1
 
-Work through the "R Programming E" lesson parts 4-7, 14 (optional 12 - only takes 5 min). 
+Work through the "Getting and Cleaning Data" lesson parts 3 and 4.
 
 From the R command prompt:  
-
-```{r eval=FALSE, echo=TRUE}
-#install.packages("swirl")  
+```{r eval=FALSE}
 library(swirl)  
-install_course("R_Programming_E")  
 swirl()  
 ```
 
@@ -31,24 +32,14 @@ swirl()
 
 Create a new R Markdown file within your local GitHub repo folder (file-->new-->R Markdown-->save as).
 
-The filename should be: HW2_lastname, i.e. for me it would be HW2_Settlage
+The filename should be: HW3_lastname, i.e. for me it would be HW3_Settlage
 
-You will use this new R Markdown file to solve problems 3-5.
+You will use this new R Markdown file to solve the following problems.
+
   
 ## Problem 3
 
-In the lecture, there were two links to StackOverflow questions on why one should use version control.  In your own words, summarize in 2-3 sentences how you think version control can help you in the classroom.
-
-\fbox{\begin{minipage}{\linewidth}
-I think version control in this classroom is a good idea because I am prone to causing irreversible mistakes to my codes, and since we will continue to upload a large number of files to GitHub, which could lead to me losing track of some files. I have had situations where I accidentally overwrote a file against my intention. In fact, I already did with HW1, though that one was semi-intentional. 
-\end{minipage}
-}
-
-&nbsp; 
-
-## Problem 4
-
-In this exercise, you will import, munge, clean and summarize datasets from Wu and Hamada's _Experiments: Planning, Design and Analysis_ book you will use in the Spring.  For each one, please weave your code and text to describe both your process and observations.  Make sure you create a tidy dataset describing the variables, create a summary table of the data, note issues with the data.  
+Redo Problem 4 parts a-d from last time using the tidyverse functions and piping.
 
 a. Sensory data from five operators.    
 <http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/Sensory.dat> 
@@ -59,51 +50,256 @@ c. Brain weight (g) and body weight (kg) for 62 species.
 d. Triplicate measurements of tomato yield for two varieties of tomatos at three planting densities.  
 <http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/tomato.dat>  
 
+&nbsp; 
+
 ```{r}
+# Sensory Table
+sensory.url <- "http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/Sensory.dat"
 
+# Importing data as dataframe
+sensory <- as.data.frame(fread(sensory.url, fill = TRUE, skip = 2))
+N <- nrow(sensory) # Number of rows = 30
+D <- ncol(sensory) - 1 # Number of objectives/variables = 5
+
+# Rearranging data so that NA goes to the first row
+for (i in 1:N) {
+  if (is.na(sensory$V6[i])) {
+    sensory[i,-1] <- sensory[i,1:D]
+    sensory[i,1] <- NA
+  }
+}
+
+# Total number of items = 10
+I <- length(sensory$V1[which(is.na(sensory$V1) == FALSE)])
+
+# Reorganizes item
+sensory$V1 <- rep(1:I, each = 3)
+
+# Tidying up, one column by column
+Item <- sort(rep(sensory$V1, each = D))
+#Observation <- rep(rep(1:3, each = 5), I)
+Operator <- rep(rep(1:D), 3*I)
+Dat <- c(t(sensory[,-1]))
+
+# Combining the columns
+#sensory <- as_tibble(cbind(Item, Observation, Operator, Dat))
+sensory <- as_tibble(cbind(Item, Operator, Dat))
+
+# Summary statistics
+summary(sensory)
+sensory.operator <- sensory %>%
+  group_by(Operator) %>%
+  summarize(Mean = mean(Dat), SD = sd(Dat), Min = min(Dat), Max = max(Dat))
+sensory.item <- sensory %>%
+  group_by(Item) %>%
+  summarize(Mean = mean(Dat), SD = sd(Dat), Min = min(Dat), Max = max(Dat))
+sensory.itemoperator <- sensory %>%
+  group_by(Item, Operator) %>%
+  summarize(Mean = mean(Dat), SD = sd(Dat), Min = min(Dat), Max = max(Dat))
+sensory.operator
+sensory.item
+sensory.itemoperator
 ```
+
+\fbox{\begin{minipage}{\linewidth}
+The summary statistics shows that the all-time minimum sensory measurement (no idea what the unit is) is 0.700, the maximum is 9.400, and the mean is 4.657. 
+
+Grouping by operator, operator 3 had the minimum average measurement with the value of 4.17, and operator 4 had the maximum average measurement with the value of 5.19. 
+
+Grouping by item, item 7 had the minimum mean measurement at 1.41 while item 9 had the highest at 8.47. 
+\end{minipage}
+}
 
 &nbsp; 
 
-## Problem 5
+```{r}
+# Kable
+kable(sensory.operator, format = "markdown", 
+      caption = "Summary statistics, grouped by operator")
+kable(sensory.item, format = "markdown", 
+      caption = "Summary statistics, grouped by item")
+kable(sensory.itemoperator, format = "markdown", 
+      caption = "Summary statistics, grouped by item & operator")
 
-In the swirl lessons, you played with a dataset "plants".  Our ultimate goal is to see if there is a relationship between pH and Foliage_Color.  Consider a statistic that combines the information in pH_Min and pH_Max.  Clean, summarize and transform the data as appropriate.  Use function _lm_ to test for a relationship.  Report both the coefficients and ANOVA results in table form.
-
-Note that if you didn't just do the swirl lesson, it is now not available.  Add the following code to your project to retrieve it.
-
-```{r echo=T, eval=F}
-# Path to data
-.datapath <- file.path(path.package('swirl'), 'Courses',
-                      'R_Programming_E', 'Looking_at_Data',
-                      'plant-data.txt')
-# Read in data
-plants <- read.csv(.datapath, strip.white=TRUE, na.strings="")
-# Remove annoying columns
-.cols2rm <- c('Accepted.Symbol', 'Synonym.Symbol')
-plants <- plants[, !(names(plants) %in% .cols2rm)]
-# Make names pretty
-names(plants) <- c('Scientific_Name', 'Duration', 'Active_Growth_Period',
-                   'Foliage_Color', 'pH_Min', 'pH_Max',
-                   'Precip_Min', 'Precip_Max',
-                   'Shade_Tolerance', 'Temp_Min_F')
+kable(sensory, format = "markdown",  
+      caption = "Sensory data, reformated")
 ```
+
+\fbox{\begin{minipage}{\linewidth}
+The above is the tidy version of the data set. There is obviously a lot of issues with this data set. Starting with the fact that it is extremely long, it is hard to navigate and confusing to understand. 
+
+I also had to use a lot of hard-coding, which is not ideal. 
+\end{minipage}
+}
 
 &nbsp; 
 
-## Problem 6
+```{r, warning=FALSE}
+# Gold Medals Table
+medals.url <- "http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/LongJumpData.dat"
+medals <- as.data.frame(fread(medals.url, fill = TRUE, skip = 1))
+
+# Assign names
+colnames(medals) <- rep(c("Year", "Long Jump"), 4)
+
+# Tibble
+medals <- as_tibble(rbind(medals[,1:2], medals[,3:4], medals[,5:6], medals[,7:8]))
+
+# Add rankings to my table
+medals <- medals %>%
+  mutate(Rank = round(rank(-`Long Jump`), 0)) # Added rankings
+medals <- medals[-which(is.na(medals$Year)),] # Remove the two NAs
+
+# Summary statistics
+medals.summary <- medals %>%
+  summarize(Mean = mean(`Long Jump`), SD = sd(`Long Jump`), 
+            Min = min(`Long Jump`), Max = max(`Long Jump`))
+  
+# Kable
+kable(medals.summary, format = "markdown", 
+      caption = "Summary statistics of Gold Medals data")
+kable(medals, format = "markdown", caption = "Gold Medals data, reformated")
+```
+
+\fbox{\begin{minipage}{\linewidth}
+The above table is the table of the record long jump of the male gold medalist by olympic year. The index year (0) is 1900. I also added the rankings as the third column. 
+
+The minimum record was 249.75, recorded at the 1896 Olympics and the maximum record was 350.50, recorded at the 1968 Olympics. The mean record across the years was 310.3. 
+
+This one went a little bit better than the Sensory data set, though some hard coding was used, especially for rbind().
+\end{minipage}
+}
+
+&nbsp; 
+
+```{r, warning=FALSE}
+# Brain and Body Weight Table
+brain.url <- "https://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/BrainandBodyWeight.dat"
+brain <- as.data.frame(fread(brain.url, fill = TRUE, skip = 1))
+
+# Assign names
+colnames(brain) <- rep(c("Body Wt", "Brain Wt"), 3)
+
+# As tibble
+brain <- as_tibble(rbind.data.frame(brain[,1:2], brain[,3:4], brain[,5:6]))
+brain <- brain[-which(is.na(brain$`Body Wt`)),]
+
+# Add brain weight/body weight ratio
+brain <- brain %>%
+  arrange(`Body Wt`) %>%
+  mutate(`Brain-to-Body Ratio` = `Brain Wt`/`Body Wt`)
+
+# Summary statistics
+brain.bodywt <- brain %>%
+  summarize(`Body Wt Mean` = mean(`Body Wt`), 
+            `Body Wt SD` = sd(`Body Wt`), 
+            `Body Wt Min` = min(`Body Wt`), 
+            `Body Wt Max` = max(`Body Wt`))
+brain.brainwt <- brain %>%
+  summarize(`Brain Wt Mean` = mean(`Brain Wt`), 
+            `Brain Wt SD` = sd(`Brain Wt`), 
+            `Brain Wt Min` = min(`Brain Wt`), 
+            `Brain Wt Max` = max(`Brain Wt`))
+
+# Kable
+kable(brain.brainwt, format = "markdown", 
+      caption = "Summary statistics of brain wt")
+kable(brain.bodywt, format = "markdown", 
+      caption = "Summary statistics of body wt")
+kable(brain, format = "markdown", caption = "Brain and Body Weight data, reformated")
+```
+
+\fbox{\begin{minipage}{\linewidth}
+The average weight of all bodies observed was 198.790 kg whereas the average weight of all brains was 283.13 g. However, the median weight of bodies and brains were 3.342 kg and 17.25 g, respectively, suggesting that both weight were skewed heavily to the right. The weights ranged from 0.005 kg to 6,654.000 kg for body and 0.10 g to 5,712.00 g for brain. 
+
+I added the brain-to-body weight ratio (in 1000s) as the third column just for reference. Though I did not perform statistical analysis, simple eyeballing it seems to indicate that the larger the body weight the lower the ratio. 
+
+The issue here was more similar to the issue I faced with the medals dataset in that there was some hard coding with binding the three pairs of columns into one. 
+\end{minipage}
+}
+
+&nbsp; 
+
+```{r, warning=FALSE}
+# Tomato Yield Table
+tomato.url <- "http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/tomato.dat"
+tomato <- as.data.frame(fread(tomato.url, fill = TRUE, skip = 1))
+
+# Assign names
+colnames(tomato) <- as.character(tomato[1, c(4, 1:3)])
+colnames(tomato)[1] <- "Tomato Variety"
+tomato <- tomato[-1,]
+tomato <- tomato[rep(1:2, each = 3),]
+
+new.tomato <- tomato
+for (i in seq(1, nrow(tomato), by = 3)) {
+  for (j in 2:ncol(tomato)) {
+    new.tomato[seq(i, i+2),j] <- strsplit(as.character(tomato[i,j]), ",")[[1]]
+  }
+}
+
+# Tidying up, one column by column
+Tomato <- c(t(rep(new.tomato$`Tomato Variety`, each = ncol(new.tomato) - 1)))
+Density <- rep(colnames(new.tomato)[-1], length(unique(Tomato)))
+Yield <- as.numeric(c(t(new.tomato[,-1])))
+tomato <- as_tibble(cbind.data.frame(Tomato, Density, Yield))
+
+# Summary statistics
+tomato.summary <- tomato %>%
+  group_by(Tomato) %>%
+  summarize(`Mean Tomato Yield` = mean(Yield), 
+            `Tomato Yield SD` = sd(Yield), 
+            `Min Tomato Yield` = min(Yield), 
+            `Max Tomato Yield` = max(Yield))
+
+tomato.summary.den <- tomato %>%
+  group_by(Density) %>%
+  summarize(`Mean Tomato Yield` = mean(Yield), 
+            `Tomato Yield SD` = sd(Yield), 
+            `Min Tomato Yield` = min(Yield), 
+            `Max Tomato Yield` = max(Yield))
+
+tomato.summary.both <- tomato %>%
+  group_by(Tomato, Density) %>%
+  summarize(`Mean Tomato Yield` = mean(Yield), 
+            `Tomato Yield SD` = sd(Yield), 
+            `Min Tomato Yield` = min(Yield), 
+            `Max Tomato Yield` = max(Yield))
+
+# Kable
+kable(tomato.summary, format = "markdown", 
+      caption = "Summary statistics of tomato yield by variety")
+kable(tomato.summary.den, format = "markdown", 
+      caption = "Summary statistics of tomato yield by density")
+kable(tomato.summary.both, format = "markdown", 
+      caption = "Summary statistics of tomato yield by variety and density")
+
+kable(tomato, format = "markdown", caption = "Tomato yield by variety, reformated")
+```
+
+\fbox{\begin{minipage}{\linewidth}
+The first column represents the tomato variety, the second the planting density, and the third the yield. The lowest yield was found in the tomato variety called "PusaEarlyDwarf" and planting density of 10,000, while the highest yield was found in "Ife\#1" and planting density of 30,000. 
+
+I had a lot of trouble with this data set because the yield data was not numeric but actually some sort of characters, delineated by commas. I had to find a way to split them up by the commas, but unable to change the classes of the yields without causing the numbers to change. This is why summary table is not available here because I could not find a way to generate summary statistics for character outputs. 
+\end{minipage}
+}
+
+&nbsp; 
+
+## Problem 4
 
 Finish this homework by pushing your changes to your repo.  In general, your workflow for this should be:  
 
-1. git pull -- to make sure you have the most recent repo  
-2. In R: do some work  
-3. git add -- this tells git to track new files  
-4. git commit -- make message INFORMATIVE and USEFUL  
-5. git push -- this pushes your local changes to the repo  
+1. In terminal: git pull  -- to make sure you have the most recent local repo  
+2. In terminal: do some work  
+3. In terminal: git add -- check files you want to commit  
+4. In terminal: git commit -- make message INFORMATIVE and USEFUL  
+5. In terminal: git push -- this pushes your local changes to the repo  
 
-If you have difficulty with steps 1-5, git is not correctly or completely setup.  See me for help.
+If you have difficulty with steps 1-5, git is not correctly or completely setup.
 
-**Only submit the .Rmd and .pdf solution files.  Names should be formatted HW2_lastname.Rmd and HW2_lastname.pdf**
+**Only submit the .Rmd and .pdf solution files.  Names should be formatted HW3_lastname_firstname.Rmd and HW3_lastname_firstname.pdf**
 
 ## Optional preperation for next class:  
 
-TBD
+TBD -- could be something sent as a class message
