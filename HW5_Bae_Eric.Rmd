@@ -115,7 +115,7 @@ Where $h_0(x) = \Theta_0 + \Theta_1x$.
 
 Given $\mathbf{X}$ and $\vec{h}$ below, implement the above algorithm and compare the results with lm(h~0+$\mathbf{X}$).  State the tolerance used and the step size, $\alpha$.
 
-```{r eval=F, echo=T, include=T}
+```{r eval=T, echo=T, include=T}
     set.seed(1256)
     theta <- as.matrix(c(1,2),nrow=2)
     X <- cbind(1,rep(1:10,10))
@@ -126,12 +126,35 @@ Given $\mathbf{X}$ and $\vec{h}$ below, implement the above algorithm and compar
 
 ### My Answer: 
 
-```{r}
+```{r eval = T, echo = T, include = T}
+# Comparison to lm function
+summary(lm(h ~ 0 + X))
+
+
+# My iteration loop
 alpha <- 0
-#new_theta <- solve(X, h)
+new_theta <- solve(t(X)%*%X, t(X)%*%h)
+new_h <- X%*%new_theta
+tolerance <- sum((h - new_h)^2)
+alpha <- 1
   
-#while ()
+while (tolerance > 1e-3) {
+  theta <- new_theta
+  h <- new_h
+  new_theta <- solve(t(X)%*%X, t(X)%*%h)
+  new_h <- X%*%new_theta
+  tolerance <- sum((h - new_h)^2)
+  alpha <- alpha + 1
+}
+print(new_theta)
+print(tolerance)
 ```
+
+I defined my tolerance level as $\sum_i^n (h_0(x_i) - h_1(x_i))^2 < 0.001$. Doing so resulted in my $\Theta_0 \approx 0.9695$ and $\Theta_1 \approx 2.0016$.  
+
+My $\alpha$, the step size, was 2.  
+
+These outputs were identical to that of the lm function.  
 
 ***
 
