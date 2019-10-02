@@ -3,6 +3,8 @@ title: "Homework 5"
 author: "Eric Bae"
 date: "`r Sys.Date()`"
 output:
+  html_notebook:
+    df_print: paged
   html_document:
     df_print: paged
 subtitle: Due October 2, 2019
@@ -150,7 +152,7 @@ print(new_theta)
 print(tolerance)
 ```
 
-I defined my tolerance level as $\sum_i^n (h_0(x_i) - h_1(x_i))^2 < 0.001$. Doing so resulted in my $\Theta_0 \approx 0.9695$ and $\Theta_1 \approx 2.0016$.  
+I defined my tolerance level as $\sum_i^n (h_0(x_i) - h_1(x_i))^2 < 0.001$. Doing so resulted in my $\hat{\Theta}_0 \approx 0.9695$ and $\hat{\Theta}_1 \approx 2.0016$.  
 
 My $\alpha$, the step size, was 2.  
 
@@ -174,7 +176,7 @@ what are you to do??  Can you explain what is going on?
 
 ### My Answer: 
 
-```{r, eval = FALSE}
+```{r, eval = T, echo = T, include= T}
 X <- cbind(rep(1, 1e5), rnorm(1e5, 5, 4))
 Y <- rnorm(1e5, 8, 7)
 
@@ -221,7 +223,7 @@ y = p + A B^{-1} (q - r)
 
 Where A, B, p, q and r are formed by:
 
-```{r data, echo=T, eval=F, include=T}
+```{r data, echo=T, eval=T, include=T}
     set.seed(12456) 
     
     G <- matrix(sample(c(0,0.5,1),size=16000,replace=T),ncol=10)
@@ -244,7 +246,7 @@ How large (bytes) are A and B?  Without any optimization tricks, how long does t
 
 ### My Answer:
 
-```{r, eval = F}
+```{r, eval = T}
 # Calculate y
     
 # Without trick
@@ -269,13 +271,12 @@ How would you break apart this compute, i.e., what order of operations would mak
 
 ### My Answer:
 
-$y = p + AB^{-1}(q - r)$  
-$y - p = AB^{-1}(q - r)$  
-$y - p = AB^{-1}q - AB^{-1}r$  
-$y - p + AB^{-1}r = AB^{-1}q$  
-$(y - p) (q - r)^{-1} B = A$  
+Note that $B$ is an identity matrix. Since $B = I$, then $B^{-1} = I$ as well. Therefore, there is no reason to even have a $B$ in this formula. We solve for $y$:  
 
-That way we can use solve((q - r) %*% B
+$y = p + AB^{-1} (q - r)$  
+$y = p + A(q - r)$.  
+
+This is much easier (and faster) to calculate.  
 
 ***
 
@@ -285,6 +286,27 @@ Part c.
 
 Use ANY means (ANY package, ANY trick, etc) necessary to compute the above, fast.  Wrap your code in "system.time({})", everything you do past assignment "C <- NULL".
 
+***
+
+### My Answer:
+
+```{r y reduced time, echo = T, eval = T, include = T}
+system.time({
+  y <- p + A %*% (q - r)
+})
+```
+
+The system.time() function gave us the following time stamps:
+
+User: 1.08  
+System: 1.84  
+Elapsed: 24.97.  
+
+While this may not appear to be too good, it is infinitely better than "Error". So I will take it. 
+
+***
+
+&nbsp; 
 
 ## Problem 6
 
