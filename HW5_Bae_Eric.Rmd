@@ -5,6 +5,7 @@ date: "`r Sys.Date()`"
 output:
   html_notebook:
     df_print: paged
+  pdf_document: default
   html_document:
     df_print: paged
 subtitle: Due October 2, 2019
@@ -132,31 +133,30 @@ Given $\mathbf{X}$ and $\vec{h}$ below, implement the above algorithm and compar
 # Comparison to lm function
 summary(lm(h ~ 0 + X))
 
-
 # My iteration loop
-alpha <- 0
+alpha <- 0.05
+tolerance <- 1e-6
+old_theta <- as.matrix(c(4, 4), nrow = 2)
 new_theta <- solve(t(X)%*%X, t(X)%*%h)
-new_h <- X%*%new_theta
-tolerance <- sum((h - new_h)^2)
-alpha <- 1
-  
-while (tolerance > 1e-3) {
-  theta <- new_theta
-  h <- new_h
-  new_theta <- solve(t(X)%*%X, t(X)%*%h)
-  new_h <- X%*%new_theta
-  tolerance <- sum((h - new_h)^2)
-  alpha <- alpha + 1
+h0 <- X%*%new_theta
+m <- nrow(X)
+iter <- 0
+
+while ((abs(new_theta[1,] - old_theta[1,]) & 
+        abs(new_theta[2,] - old_theta[2,])) > tolerance) {
+  old_theta <- new_theta
+  new_theta <- old_theta - alpha/m*as.matrix(c(sum(h0 - h), sum(X[,2]*(h0 - h))), nrow = 2)
+  h0 <- X%*%new_theta
+  iter <- iter + 1
+  print(iter)
 }
-print(new_theta)
-print(tolerance)
 ```
 
-I defined my tolerance level as $\sum_i^n (h_0(x_i) - h_1(x_i))^2 < 0.001$. Doing so resulted in my $\hat{\Theta}_0 \approx 0.9695$ and $\hat{\Theta}_1 \approx 2.0016$.  
+I defined my tolerance level as $1e-6$. Doing so resulted in my $\hat{\Theta}_0 \approx 0.9695$ and $\hat{\Theta}_1 \approx 2.0016$.  
 
-My $\alpha$, the step size, was 2.  
+My $\alpha$, the step size, was 0.05.  
 
-These outputs were identical to that of the lm function.  
+These outputs were basically identical to that of the lm function.  
 
 ***
 
@@ -176,7 +176,7 @@ what are you to do??  Can you explain what is going on?
 
 ### My Answer: 
 
-```{r, eval = T, echo = T, include= T}
+```{r, eval = F, echo = T, include= T}
 X <- cbind(rep(1, 1e5), rnorm(1e5, 5, 4))
 Y <- rnorm(1e5, 8, 7)
 
@@ -246,7 +246,7 @@ How large (bytes) are A and B?  Without any optimization tricks, how long does t
 
 ### My Answer:
 
-```{r, eval = T}
+```{r, eval = F}
 # Calculate y
     
 # Without trick
@@ -290,19 +290,33 @@ Use ANY means (ANY package, ANY trick, etc) necessary to compute the above, fast
 
 ### My Answer:
 
-```{r y reduced time, echo = T, eval = T, include = T}
+```{r y reduced time, echo = T, eval = T, include = T, tidy = F}
+system.time({
+  y <- p + A %*% solve(B, (q - r))
+})
+
 system.time({
   y <- p + A %*% (q - r)
 })
 ```
 
-The system.time() function gave us the following time stamps:
+First, I start with the basic fix - using $Ax = b$ method instead of finding inverse of B matrix directly. 
+
+The system.time() function gave us the following time stamps: 
+
+User: 864.66  
+System: 4.01  
+Elapsed: 870.31.  
+
+This is not that good but at least I could solve for y, unlike in part (a). 
+
+Getting rid of the B matrix altogether gave us the following time stamps:
 
 User: 1.08  
 System: 1.84  
 Elapsed: 24.97.  
 
-While this may not appear to be too good, it is infinitely better than "Error". So I will take it. 
+While this may not appear to be too good, it is definitely better than "Error". So I will take it. 
 
 ***
 
