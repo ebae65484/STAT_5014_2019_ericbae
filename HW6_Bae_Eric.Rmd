@@ -1,0 +1,273 @@
+---
+title: "Homework 6"
+subtitle: "Due Wednesday Oct 9, 9am"
+author: "Eric Bae"
+date: '`r Sys.Date()`'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+    knitr::opts_chunk$set(echo = TRUE)
+    knitr::opts_chunk$set(echo = T, eval=T, cache=T, tidy.opts=list(width.cutoff=55),
+                tidy=F, include=T, message=F, warning=F)
+```
+
+For each assignment, turn in by the due date/time.  Late assignments must be arranged prior to submission.  In every case, assignments are to be typed neatly using proper English in Markdown.  
+
+This week, we spoke about the apply family of functions.  We can use these functions to simplify our code (ie our job) if we can create functions.  Ultimately, our goal is to find deficiencies and explore relationships in data and quantify these relationships.  Efficiently.  So, functions and methods to use these functions could be helpful in some scenarios.
+
+## Problem 1
+
+Work through the Swirl "R_programming_E" lesson parts 10 and 11, and perhaps 12 if you need some help with things important to Chris' class (there is also a set of swirl lessons on probability...).
+
+```{r, echo = FALSE, eval = FALSE}
+library(swirl)
+swirl()
+```
+
+## Problem 2
+
+As in the last homework, create a new R Markdown file (file-->new-->R Markdown-->save as.
+
+The filename should be: HWXX_lastname_firstname, i.e. for me it would be HWXX_Settlage_Bob
+
+You will use this new R Markdown file to solve the following problems:
+  
+## Problem 3  
+
+a. Create a function that computes the proportion of successes in a vector.  Use good programming practices.
+
+```{r}
+prop_success <- function(vec) {
+  # Assuming the vector is a boolean/numeric character,
+  # where TRUE or 1 incidates success,
+  # and FALSE or 0 indicates failure. 
+  return(sum(vec)/length(vec))
+}
+```
+
+&nbsp; 
+
+b. Create a matrix to simulate 10 flips of a coin with varying degrees of "fairness" (columns = probability) as follows:
+
+```{r echo=T, include=T, eval=T}
+    set.seed(12345)
+    P4b_data <- matrix(rbinom(10, 1, prob = (30:40)/100), nrow = 10, ncol = 10, byrow = FALSE)
+```
+
+&nbsp; 
+
+c. Use your function in conjunction with apply to compute the proportion of success in P4b_data by column and then by row.  What do you observe?  What is going on?
+
+```{r}
+sapply(1:ncol(P4b_data), function(k) prop_success(P4b_data[,k]))
+sapply(1:nrow(P4b_data), function(k) prop_success(P4b_data[k,]))
+```
+
+\fbox{\begin{minipage}{\linewidth}
+It appears that the proportion of success is exactly 0.6 for every column, while the proportion fo success is 1 for the first 4 and the last 2 rows and 0 for the rest. \\
+
+What appears to be happening is the "rbinom(10, 1, prob = (30:40)/100)" is only generating a vector of length 10 because according to the function, it does not take a vector input for the argument "prob," which meant only the first argument of the (30:40)/100 was used. \\
+
+Even though only a single vector of 10 was generated, we are forcing it into a $10 \times 10$ matrix, we are simply copying the vector 10 times by column (since we said byrow = F). That's why every column is identical to one another. 
+\end{minipage}}
+
+&nbsp; 
+
+d. You are to fix the above matrix by creating a function whose input is a probability and output is a vector whose elements are the outcomes of 10 flips of a coin.  Now create a vector of the desired probabilities.  Using the appropriate apply family function, create the matrix we really wanted above.  Prove this has worked by using the function created in part a to compute and tabulate the appropriate marginal successes.
+
+```{r}
+coin_outcome <- function(prob) {
+  # probability has to be a single value
+  outcome <- rbinom(10, 1, prob)
+  return(outcome)
+}
+
+prob <- 30:40/100
+outcome_matrix <- sapply(prob, function(k) coin_outcome(k))
+outcome_matrix
+sapply(1:10, function(k) prop_success(outcome_matrix[,k]))
+```
+
+&nbsp; 
+
+## Problem 4
+
+In Homework 4, we had a dataset we were to compute some summary statistics from.  The description of the data was given as "a dataset which has multiple repeated measurements from two devices by thirteen Observers".  Where the device measurements were in columns "dev1" and "dev2".  Reimport that dataset, change the names of "dev1" and "dev2" to x and y and do the following:
+
+\begin{enumerate}
+  \item create a function that accepts a dataframe of values, title, and x/y labels and creates a scatter plot
+  \item use this function to create:
+  \begin{enumerate}
+    \item a single scatter plot of the entire dataset
+    \item a seperate scatter plot for each observer (using the apply function)
+  \end{enumerate}
+\end{enumerate}
+
+```{r eval=T}
+dat <- readRDS("/Users/ericb/Desktop/STAT_5014/Hw4_data.rds")
+names(dat)[2:3] <- c("x", "y")
+
+#png("C:/Users/ericb/Desktop/STAT_5014/temp.png")
+plot_data <- function(dat, obs = unique(dat$Observer)) {
+  dat_new <- dat[which(dat$Observer %in% obs),]
+  observer <- dat_new$Observer
+  plot(dat_new$x, dat_new$y, xlab = "x", ylab = "y", 
+       col = observer, pch = 16)
+  if (length(obs) == 1) {
+    title(paste("Observer", obs), add = T)
+  }
+  else if (length(obs) != 1) {
+    title("Observers", add = T)
+  }
+}
+
+# Single scatter plot of the entire dataset
+obs <- unique(dat$Observer)
+plot_data(dat)
+legend("topleft", legend = paste(obs), col = obs, pch = 16, cex = 0.5)
+
+# Multiple scatter plots
+par(mfrow = c(4, 4))
+par(mar = c(1.5, 1.5, 1.5, 1.5))
+p0 <- sapply(obs, function(k) plot_data(dat, k))
+
+#vapply(dat, plot_data, observer = obs)
+#apply(dat, 1, plot_data)
+```
+
+```{r, echo = T, eval=T, include=T}
+#knitr::include_graphics("C:/Users/ericb/Desktop/STAT_5014/temp.png")
+
+```
+
+&nbsp; 
+
+
+
+## Problem 5
+
+Our ultimate goal in this problem is to create an annotated map of the US.  I am giving you the code to create said map, you will need to customize it to include the annotations.
+
+Part a. Get and import a database of US cities and states.  Here is some R code to help:
+
+```{r get_city_list, echo=T, eval=T, include=T}
+    #we are grabbing a SQL set from here
+    # http://www.farinspace.com/wp-content/uploads/us_cities_and_states.zip
+    #download the files, looks like it is a .zip
+    library(downloader)
+    download("http://www.farinspace.com/wp-content/uploads/us_cities_and_states.zip",dest="us_cities_states.zip")
+    unzip("us_cities_states.zip", exdir = ".")
+    
+    #read in data, looks like sql dump, blah
+    library(data.table)
+    states <- fread(input = "./us_cities_and_states/states.sql", 
+                    skip = 23, sep = "'", sep2 = ",", 
+                    header = F, select = c(2,4))
+    ### YOU do the CITIES
+    ### I suggest the cities_extended.sql may have everything you need
+    ### can you figure out how to limit this to the 50?
+    cities <- fread(input = "./us_cities_and_states/cities_extended.sql", 
+                    sep = "'", sep2 = ",", 
+                    header = F, select = 2*(1:6))
+    names(cities) <- c("name", "state", "zip", "N", "W", "county")
+    cities <- cities[-which(cities$state %in% c("DC", "PR")),]
+```
+
+Part b. Create a summary table of the number of cities included by state.
+
+```{r echo=T, eval=T, include = T}
+library(pander)
+cities_table <- table(cities$state, dnn = "States")
+pander(cities_table)
+```
+
+
+Part c. Create a function that counts the number of occurances of a letter in a string.  The input to the function should be "letter" and "state_name".  The output should be a scalar with the count for that letter.
+
+&nbsp; 
+
+Create a for loop to loop through the state names imported in part a.  Inside the for loop, use an apply family function to iterate across a vector of letters and collect the occurance count as a vector.
+
+```{r echo = T, eval = T, include = T}
+letter_count <- data.frame(matrix(NA, nrow = 50, ncol = 26))
+colnames(letter_count) <- letters
+rownames(letter_count) <- state.name
+getCount <- function(letter, state_name) {
+  state_name_lower <- tolower(state_name)
+  state_name_spl <- strsplit(state_name_lower, "")[[1]]
+  count <- length(which(state_name_spl == letter))
+return(count)
+}
+for (i in 1:50){
+  letter_count[i,] <- sapply(letters, function(k) getCount(k, state.name[i]))
+}
+pander(letter_count)
+```
+
+Part d.
+
+Create 2 maps to finalize this.  Map 1 should be colored by count of cities on our list within the state.  Map 2 should highlight only those states that have more than 3 occurances of ANY letter in their name.
+
+Quick and not so dirty map:
+
+```{r eval=T, echo=T, include=T}
+#https://cran.r-project.org/web/packages/fiftystater/vignettes/fiftystater.html
+library(ggplot2)
+devtools::install_github("wmurphyrd/fiftystater")
+#library(fiftystater)
+library(mapproj)
+
+cities_states <- cbind.data.frame(
+  state = tolower(states$V2[which(states$V2 != "District of Columbia")]), 
+  cities_table)
+# map_id creates the aesthetic mapping to the state name column in your data
+p1 <- ggplot(cities_states, aes(map_id = state)) + 
+  # map points to the fifty_states shape data
+  geom_map(aes(fill = Freq), map = fifty_states) + 
+  expand_limits(x = fifty_states$long, y = fifty_states$lat) +
+  coord_map() +
+  scale_x_continuous(breaks = NULL) + 
+  scale_y_continuous(breaks = NULL) +
+  scale_fill_gradient(low = "white", high = "hotpink") +
+  labs(x = "", y = "") +
+  ggtitle("US states by count of cities") +
+  fifty_states_inset_boxes() +
+  theme(legend.position = "bottom", 
+        panel.background = element_blank()) 
+p1 
+
+letter_count_max <- apply(letter_count, 1, max)
+letter_count_max <- ifelse(letter_count_max >= 3, "Yes", "No")
+letter_count_max <- cbind.data.frame(state = tolower(names(letter_count_max)), 
+                                     three_letters = letter_count_max)
+
+p2 <- ggplot(letter_count_max, aes(map_id = state)) + 
+  # map points to the fifty_states shape data
+  geom_map(aes(fill = three_letters), map = fifty_states) + 
+  expand_limits(x = fifty_states$long, y = fifty_states$lat) +
+  coord_map() +
+  scale_x_continuous(breaks = NULL) + 
+  scale_y_continuous(breaks = NULL) +
+  labs(x = "", y = "") +
+  ggtitle("US states that contains more than 3 of same letters") +
+  fifty_states_inset_boxes() +
+  theme(legend.position = "bottom", 
+        panel.background = element_blank()) 
+p2 
+
+ggsave(plot = p1, file = "HW6_Problem5_Plot1_Bae.pdf")
+ggsave(plot = p2, file = "HW6_Problem5_Plot2_Bae.pdf")
+```
+## Problem 6
+
+Push your homework to submit.
+
+## Preperation for next class:  
+
+Next week we will talk about parallelizing in R.  No swirl.  :)
+
+To make sure this experience is more reproducible across the class, please get an account in ARC (arc.vt.edu, requests, account request).  When you have done this, please go to ondemand.arc.vt.edu, choose "interactive apps" and the Rstudio under Cascades.  Please set Rpackage set = "basic tidyverse", account = "arc-train", partition to "normal_q", hours to 1, nodes to 1, and cores to 10.  Hit launch.
+
+After about 10 min, you should get a green Rstudio button.  After this first time, you should see the startup takes seconds.
+
