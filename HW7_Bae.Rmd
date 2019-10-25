@@ -1,0 +1,330 @@
+---
+title: "Homework 7"
+subtitle: "Due Wednesday Oct 16, 2019"
+author: "Eric Bae"
+date: '`r Sys.Date()`'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(quantreg)
+library(quantmod)
+library(parallel)
+library(data.table)
+library(knitr)
+library(tidyr)
+library(dplyr)
+library(foreach)
+library(pander)
+options("getSymbols.warning4.0"=FALSE)
+set.seed(5014)
+```
+
+For each assignment, turn in by the due date/time.  Late assignments must be arranged prior to submission.  In every case, assignments are to be typed neatly using proper English in Markdown.  
+
+This week, we spoke about parallelizing our R code.  To do this homework, we will use ARC resources.  I have added you to an "allocation" called arc-train4.  If you go to ondemand.arc.vt.edu, use the Rstudio interactive app on Cascades, use the basic bio version of R, arc-train4 as the account, request 10 cores for 48 hours.  The first time you do this, it will take 4-20 min to create the image being used, after that, it should be quick.  
+
+## Problem 1
+
+Create a new R Markdown file within your local GitHub repo folder (file-->new-->R Markdown-->save as).
+
+The filename should be: HW7_lastname, i.e. for me it would be HW3_Settlage
+
+You will use this new R Markdown file to solve the following problems.
+
+  
+## Problem 2
+
+Bootstrapping
+
+Recall the sensory data from five operators:    
+<http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/Sensory.dat> 
+
+Sometimes, you really want more data to do the desired analysis, but going back to the "field" is often not an option. An often used method is bootstrapping.  Check out the second answer here for a really nice and detailed description of bootstrapping:
+<https://stats.stackexchange.com/questions/316483/manually-bootstrapping-linear-regression-in-r>.
+
+What we want to do is bootstrap the Sensory data to get non-parametric estimates of the parameters.  Assume that we can neglect item in the analysis such that we are really only interested in a linear model lm(y~operator).
+
+```{r}
+# Sensory Table
+sensory.url <- "http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/Sensory.dat"
+
+# Importing data as dataframe
+sensory <- as.data.frame(fread(sensory.url, fill = TRUE, skip = 2))
+N <- nrow(sensory) # Number of rows = 30
+D <- ncol(sensory) - 1 # Number of objectives/variables = 5
+
+# Rearranging data so that NA goes to the first row
+for (i in 1:N) {
+  if (is.na(sensory$V6[i])) {
+    sensory[i,-1] <- sensory[i,1:D]
+    sensory[i,1] <- NA
+  }
+}
+
+# Total number of items = 10
+I <- length(sensory$V1[which(is.na(sensory$V1) == FALSE)])
+
+# Reorganizes item
+sensory$V1 <- rep(1:I, each = 3)
+
+# Tidying up, one column by column
+Item <- sort(rep(sensory$V1, each = D))
+#Observation <- rep(rep(1:3, each = 5), I)
+Operator <- rep(rep(1:D), 3*I)
+Dat <- c(t(sensory[,-1]))
+
+# Combining the columns
+#sensory <- as_tibble(cbind(Item, Observation, Operator, Dat))
+sensory <- as_tibble(cbind(Item, Operator, Dat))
+pander(sensory)
+```
+
+&nbsp; 
+
+### Part a.  First, the question asked in the stackexchange was why is the supplied code not working.  This question was actually never answered.  What is the problem with the code?  If you want to duplicate the code to test it, use the quantreg package to get the data.
+
+```{r}
+#1)fetch data from Yahoo
+#AAPL prices
+apple08 <- getSymbols('AAPL', auto.assign = FALSE, 
+                      from = '2008-1-1', to = "2008-12-31")[,6]
+#market proxy
+rm08 <- getSymbols('^ixic', auto.assign = FALSE, 
+                   from = '2008-1-1', to = "2008-12-31")[,6]
+
+#log returns of AAPL and market
+logapple08 <- na.omit(ROC(apple08)*100)
+logrm08 <- na.omit(ROC(rm08)*100)
+
+#OLS for beta estimation
+beta_AAPL_08 <- summary(lm(logapple08 ~ logrm08))$coefficients[2,1]
+
+#create df from AAPL returns and market returns
+df08 <- cbind(logapple08,logrm08)
+set.seed(666)
+
+Boot <- 1000
+sd.boot <- rep(0, Boot)
+for (i in 1:Boot){
+# nonparametric bootstrap
+bootdata <- df08[sample(nrow(df08), size = 251, replace = TRUE),]
+sd.boot[i] <- coef(summary(lm(AAPL.Adjusted ~ IXIC.Adjusted, data = bootdata)))[2,2]
+}
+
+#sd.boot
+```
+
+It was not working because the variable names were not what was given in the `bootdata` when performing lm. After specifying the data set in lm, it worked. 
+
+&nbsp; 
+
+### Part b. Bootstrap the analysis to get the parameter estimates using 100 bootstrapped samples.  Make sure to use system.time to get total time for the analysis.  You should probably make sure the samples are balanced across operators, ie each sample draws for each operator.
+
+```{r}
+Bootstrap_fun <- function(Boot) {
+  b0.boot <- b1.boot <- rep(0, Boot)
+  for (i in 1:Boot){
+  # nonparametric bootstrap
+    sensory.op1 <- subset(sensory, sensory$Operator == 1)
+    sensory.op2 <- subset(sensory, sensory$Operator == 2)
+    sensory.op3 <- subset(sensory, sensory$Operator == 3)
+    sensory.op4 <- subset(sensory, sensory$Operator == 4)
+    sensory.op5 <- subset(sensory, sensory$Operator == 5)
+    sampling <- c(sample(nrow(sensory.op1), replace = TRUE), 
+                  sample(nrow(sensory.op2), replace = TRUE), 
+                  sample(nrow(sensory.op3), replace = TRUE), 
+                  sample(nrow(sensory.op4), replace = TRUE), 
+                  sample(nrow(sensory.op5), replace = TRUE))
+    bootdata <- sensory[sampling,]
+    b0.boot[i] <- coef(summary(lm(Dat ~ Operator, data = bootdata)))[1, 1]
+    b1.boot[i] <- coef(summary(lm(Dat ~ Operator, data = bootdata)))[2, 1]
+  }
+  return(list(b0.boot = b0.boot, b1.boot = b1.boot))
+}
+
+sys.time.p1 <- system.time(boot_data <- Bootstrap_fun(100))
+boot_data <- cbind.data.frame(b0.boot = boot_data$b0.boot, b1.boot = boot_data$b1.boot)
+pander(boot_data)
+sys.time.p1
+```
+
+&nbsp; 
+
+### Part c. Redo the last problem but run the bootstraps in parallel (`cl <- makeCluster(8)`), don't forget to `stopCluster(cl)`).  Why can you do this?  Make sure to use system.time to get total time for the analysis.
+
+Create a single table summarizing the results and timing from part a and b.  What are your thoughts?
+
+```{r}
+cl <- makeCluster(8)
+sys.time.p2 <- system.time(Bootstrap_fun(100))
+stopCluster(cl)
+sys.time.p2
+
+sys.time.names <- names(c(sys.time.p1))
+sys.time.mat <- matrix(c(sys.time.p1, sys.time.p2), nrow = 2, byrow = TRUE)
+colnames(sys.time.mat) <- sys.time.names
+rownames(sys.time.mat) <- c("Non-parallelized", "Parallelized")
+pander(as.data.frame(sys.time.mat))
+```
+
+System time is basically zero for both. Probably because the operation was too simple already. 
+
+&nbsp; 
+
+## Problem 3
+
+Newton's method gives an answer for a root.  To find multiple roots, you need to try different starting values.  There is no guarantee for what start will give a specific root, so you simply need to try multiple.  From the plot of the function in HW4, problem 8, how many roots are there?
+
+Create a vector (`length.out=1000`) as a "grid" covering all the roots and extending +/-1 to either end.  
+
+### Part a.  Using one of the apply functions, find the roots noting the time it takes to run the apply function.
+
+```{r plot_fn, echo=F, eval=T, include=T}
+curve(3^x - sin(x) + cos(5*x),from = -5, to=1.4,ylab = "f(x)")
+```
+
+```{r newton, echo=T, eval=T, include=T}
+  # function will use Newtons method given in class notes
+  # for simplicity, plugging in the derivative directly
+newton <- function(initGuess){
+  fx <- 3^initGuess - sin(initGuess) + cos(5*initGuess)
+  fxprime <- log(3)*3^(initGuess) - cos(initGuess) - 5*sin(5*initGuess)
+  f <- initGuess - fx/fxprime
+}
+
+many_newtons <- function(test.point) { 
+  roots <- c(test.point, rep(0, 999))
+  i <- 1
+  tolerance <- 0.01
+  move <- 1
+  while (move > tolerance && i < 1000) {
+    roots[i + 1] <- newton(roots[i])
+    move <- abs(roots[i] - roots[i + 1])
+    i <- i + 1
+  }
+  est.root <- roots[i-1]
+  return(est.root)
+}  
+```
+
+```{r plot_fn2, echo=T, eval=T, include=T}
+grid <- seq(-6, 2, length.out = 1000)
+roots <- sapply(grid, function(k) many_newtons(k))
+roots_data <- cbind.data.frame(grid = grid, final_roots = roots)
+#pander(roots_data)
+
+curve(3^x - sin(x) + cos(5*x), from = -5,to=1.4, ylab="f(x)")
+abline(h = 0, col = 2)
+a <- sapply(1:1000, function(i) abline(v = roots[i], col="blue"))
+#points(x=roots[1:(i-1)],
+#       y=(3^roots[1:(i-1)] - sin(roots[1:(i-1)]) + cos(5*roots[1:(i-1)])),
+#       pch=20,col="green")
+#text(x=roots[1:(i-1)],
+#       y=(0.3+3^roots[1:(i-1)] - sin(roots[1:(i-1)]) + cos(5*roots[1:(i-1)])),
+#     labels=1:(i-1))
+
+sys.time.p1 <- system.time(sapply(grid, function(k) many_newtons(k)))
+sys.time.p1
+```
+
+The blue vertical lines are the roots I found when I tested a grid of 1,000 items between -6 to 2. It was successful most of the time, but there were a few that did not converge to the correct root. 
+
+&nbsp; 
+
+### Part b.  Repeat the apply command using the equivelant parApply command.  Use 8 workers.  `cl <- makeCluster(8)`.
+
+```{r echo=T, eval=T, include=T}
+cl <- makeCluster(8)
+clusterExport(cl, c("many_newtons", "newton"))
+sys.time.p2 <- system.time(parSapply(cl = cl, 
+                                     grid, function(k) many_newtons(k)))
+stopCluster(cl)
+sys.time.p2
+
+sys.time.names <- names(c(sys.time.p1))
+sys.time.mat <- matrix(c(sys.time.p1, sys.time.p2), nrow = 2, byrow = TRUE)
+colnames(sys.time.mat) <- sys.time.names
+rownames(sys.time.mat) <- c("Non-parallelized", "Parallelized")
+pander(as.data.frame(sys.time.mat))
+```
+
+Create a table summarizing the roots and timing from both parts a and b.  What are your thoughts?
+
+Very little difference between the two. 
+
+## Problem 4
+
+Gradient descent, like Newton's method, has "hyperparameters" that are determined outside the algorithm and there is no set rules for determing what settings to use.  For gradient descent, you need to set a start value, a step size and tolerance.  Using a step size of $1e^{-7}$ and tolerance of $1e^{-9}$, try 10000 different combinations of $\beta_0$ and $\beta_1$ across the range of possible $\beta$'s +/-1 from true making sure to take advantages of parallel computing opportunities.  In my try at this, I found starting close to true took 1.1M iterations, so set a stopping rule for 5M and only keep a rolling 1000 iterations for both $\beta$'s.  If this is confusing, see the solution to the last homework.
+
+### Part a. What if you were to change the stopping rule to include our knowledge of the true value?  Is this a good way to run this algorithm?  What is a potential problem?
+
+No, it is not a good way to run this algorithm. True values are probably not the best estimates of the parameters given the data set. 
+
+&nbsp; 
+
+### Part c. Make a table of each starting value, the associated stopping value, and the number of iterations it took to get to that value.  What fraction of starts ended prior to 5M?  What are your thoughts on this algorithm?
+
+```{r GD, eval=T, echo=T, include=T, cache = T}
+#quick gradient descent
+#need to make guesses for both Theta0 and Theta1, might as well be close
+gradient <- function(init_point_t0, init_point_t1) {
+  theta <- as.matrix(c(1,2), nrow=2)
+  X <- cbind(1, rep(1:10,10))
+  h <- X%*%theta + rnorm(100,0,0.2)
+
+  alpha <- 1e-7 # this is the step size
+  m <- 100 # this is the size of h
+  tolerance <- 1e-9 # stopping tolerance
+  theta0 <- c(init_point_t0, rep(0,999))
+  theta1 <- c(init_point_t1, rep(0,999))
+  i <- 2 #iterator, 1 is my guess (R style indecies)
+  #current theta is last guess
+  current_theta <- as.matrix(c(theta0[i - 1], theta1[i - 1]), nrow=2)
+  #update guess using gradient
+  theta0[i] <-theta0[i - 1] - (alpha/m) * sum(X %*% current_theta - h)
+  theta1[i] <-theta1[i - 1] - (alpha/m) * sum((X %*% current_theta - h)*rowSums(X))
+  rs_X <- rowSums(X) # can precalc to save some time
+  z <- 0
+  while(abs(theta0[i] - theta0[i-1]) > tolerance && 
+        abs(theta1[i] - theta1[i-1]) > tolerance && z < 5000000){ 
+    if (i == 1000) {theta0[1] = theta0[i]; theta1[1] = theta1[i]; i = 1;} 
+    ##cat("z=",z,"\n",sep="")}
+    z <- z + 1
+    i <- i + 1
+    current_theta <- as.matrix(c(theta0[i-1],theta1[i-1]),nrow=2)
+    theta0[i] <-theta0[i - 1] - (alpha/m) * sum(X %*% current_theta - h)
+    theta1[i] <-theta1[i - 1] - (alpha/m) * sum((X %*% current_theta - h)*rs_X)
+  }
+  return(list(current_theta = current_theta, iter = z))
+}
+
+grid_t0 <- rep(seq(0, 2, length.out = 100), each = 100)
+grid_t1 <- rep(seq(0, 2, length.out = 100), 100)
+grid_mat <- cbind.data.frame(grid_t0, grid_t1)
+
+cl2 <- makeCluster(8)
+clusterExport(cl2, "gradient")
+sys.time.p2 <- system.time(gradient_output <- 
+                             parApply(cl = cl2, grid_mat, 1, 
+                                      function(mat) gradient(mat[1], mat[2])))
+sys.time.p2
+stopCluster(cl2)
+
+gradient_output <- unlist(gradient_output)
+output_theta0 <- gradient_output[names(gradient_output) == "current_theta1"]
+output_theta1 <- gradient_output[names(gradient_output) == "current_theta2"]
+output_iter <- gradient_output[names(gradient_output) == "iter"]
+
+pander(cbind.data.frame(est_theta0 = output_theta0, 
+                        est_theta1 = output_theta1, 
+                        iterations = output_iter))
+```
+
+```{r gd_table, echo=F, include=T, eval=T}
+# quick result object
+#temp <- rbind(c(theta0[i],theta1[i]),lm_fit$coefficients)
+#rownames(temp) <- c("Gradient Descent","R's lm")
+#knitr::kable(temp,caption="Gradient Descent vs R's lm", longtable=FALSE)
+```
