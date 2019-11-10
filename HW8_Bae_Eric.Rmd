@@ -7,6 +7,12 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(swirl)
+library(ggplot2)
+library(gridExtra)
+library(GGally)
+library(ggpubr)
 ```
 
 For each assignment, turn in by the due date/time.  Late assignments must be arranged prior to submission.  In every case, assignments are to be typed neatly using proper English in Markdown.  
@@ -18,9 +24,8 @@ This week, we spoke about Exploratory Data Analysis and plotting. To begin the h
 Work through the Swirl "Exploratory_Data_Analysis" lesson parts 1 - 10.
 
 ```{r, eval = FALSE}
-library(swirl)
 swirl::install_course("Exploratory Data Analysis")
-swirl()
+swirl() # Did up to Part 5
 ```
 
 ## Problem 2
@@ -39,15 +44,137 @@ Using tidy concepts, get and clean the following data on education from the Worl
 
 How many data points were there in the complete dataset?  In your cleaned dataset?
 
+```{r, cache = TRUE}
+#setwd("/Users/samsung/Desktop/STAT_5014")
+setwd("/Users/ericb/Desktop/STAT_5014")
+
+edstats <- read.csv("EdStatsData.csv", header = T)
+names(edstats)[1] <- "Country.Name"
+names(edstats)[-(1:4)] <- substr(names(edstats)[-(1:4)], 2, 5)
+# There were a total of 886,930 x 66 = 58,537,380 observations
+
+edstats.data <- as.vector(t(edstats[,-(1:4)]))
+na.values <- which(is.na(edstats.data))
+edstats.data <- edstats.data[-na.values]
+```
+
+```{r, cache = TRUE}
+edstats.names <- edstats[,(1:4)]
+rows <- rep(1:nrow(edstats.names), each = length(names(edstats)[-(1:4)]))
+edstats.names <- edstats.names[rows,]
+edstats.names <- edstats.names[-na.values, ]
+```
+
+```{r, cache = TRUE}
+edstats.years <- names(edstats[,-(1:4)])
+edstats.years <- rep(edstats.years, nrow(edstats))[-na.values]
+```
+
+```{r, cache = TRUE}
+edstats.df <- cbind.data.frame(edstats.names, Years = edstats.years, Data = edstats.data)
+dim(edstats.df)
+
+# There were a total of 5,082,201 data points. 
+```
+
+\fbox{\begin{minipage}{\linewidth}
+There were a total of 58,537,380 data points including NAs in the original data set. This was reduced to 5,082,201 data points after NAs were removed. 
+\end{minipage}}
+
+&nbsp; 
+
 Choosing 2 countries, create a summary table of indicators for comparison.
+
+```{r}
+# Tibble
+edstats.df <- as_tibble(edstats.df)
+
+edstats.df.slv <- edstats.df %>%
+  filter(Country.Name == "El Salvador")
+
+edstats.df.kor <- edstats.df %>%
+  filter(Country.Name == "Korea, Rep.")
+
+edstats.df.slv <- edstats.df.slv[, -c(2, 4)]
+edstats.df.kor <- edstats.df.kor[, -c(2, 4)]
+  
+edstats.df.both <- left_join(edstats.df.slv, edstats.df.kor, 
+                              by = c("Indicator.Name", "Years"))
+edstats.df.both
+```
+
+\fbox{\begin{minipage}{\linewidth}
+I chose El Salvador and Korea, Rep. \\
+
+There were many indicators. A small subset is seen above. 
+\end{minipage}}
+
+&nbsp; 
 
 ## Problem 3
 
 Using base plotting functions, recreate the scatter plot shown in class with histograms in the margins.  You do not have to make the plot the same, just have a scatter plot with marginal histograms.  Demonstrate the plot using suitable data from problem 2.
 
+```{r}
+edstats.df.se.prm.tenr <- edstats.df %>%
+  filter(Indicator.Code == "SE.PRM.TENR")
+edstats.df.se.prm.tenr.fe <- edstats.df %>%
+  filter(Indicator.Code == "SE.PRM.TENR.FE")
+edstats.df.se.prm.tenr.both <- inner_join(edstats.df.se.prm.tenr.fe, edstats.df.se.prm.tenr, 
+                                          by = c("Country.Name", "Country.Code", "Years"))
+names(edstats.df.se.prm.tenr.both)[6] <- "Female"
+names(edstats.df.se.prm.tenr.both)[9] <- "Male"
+```
+
+```{r, include = FALSE}
+hist.female <- with(edstats.df.se.prm.tenr.both, hist(Female))
+hist.male <- with(edstats.df.se.prm.tenr.both, hist(Male))
+```
+
+```{r}
+# Add histograms to a scatterplot
+par(fig = c(0, 0.8, 0, 0.8), new=TRUE)
+with(edstats.df.se.prm.tenr.both, plot(Female, Male, pch = 16, cex = 0.75, 
+                                       xlab = "Female Primary School Enrollment Rate", 
+                                       ylab = "Male Primary School Enrollment Rate", 
+                                       col = "hotpink"))
+par(fig = c(0, 0.8, 0.45, 1), new=TRUE)
+barplot(hist.female$density, axes = FALSE, col = "yellowgreen")
+lines(hist.female$mids, hist.female$density, lwd = 2, col = "navyblue")
+par(fig = c(0.65, 1, 0, 0.8), new=TRUE)
+barplot(hist.male$density, axes = FALSE, horiz = TRUE, col = "turquoise")
+lines(hist.male$mids, hist.male$density, lwd = 2, col = "navyblue")
+mtext("Male vs. Female Primary School Enrollment Rates for All Countries", 
+      side = 3, outer=TRUE, line = -2)
+```
+
+&nbsp; 
+
 ## Problem 4
 
 Recreate the plot in problem 3 using ggplot2 functions.  Note: there are many extension libraries for ggplot, you will probably find an extension to the ggplot2 functionality will do exactly what you want.
+
+```{r, message = FALSE}
+edstats.df.se.prm.tenr.both.df <- as.data.frame(edstats.df.se.prm.tenr.both)
+
+p1 <- ggplot(edstats.df.se.prm.tenr.both.df, aes(x = Female, y = Male)) +
+  geom_point(color = "hotpink") +
+  xlab("Female Primary School Enrollment Rate") + 
+  ylab("Male Primary School Enrollment Rate")
+p2 <- ggplot(edstats.df.se.prm.tenr.both.df, aes(Female, ..density.., )) +
+  geom_histogram(fill = "yellowgreen") + 
+  geom_density(col = "blue") + xlab("") + ylab("") + 
+  theme_classic()
+p3 <- ggplot(edstats.df.se.prm.tenr.both.df, aes(Male, ..density..)) +
+  geom_histogram(fill = "turquoise") + 
+  geom_density(col = "blue") + xlab("") + ylab("") + 
+  coord_flip() + theme_classic()
+gg_figure <- ggarrange(p2, NULL, p1, p3, 
+                       ncol = 2, nrow = 2,  align = "hv", 
+                       widths = c(2, 1), heights = c(1, 2))
+annotate_figure(gg_figure, 
+                top = "Male vs. Female Primary School Enrollment Rates for All Countries")
+```
 
 ## Problem 5
 
